@@ -188,6 +188,7 @@ swapNodes = (targetBody, existingNodes, options) ->
       else
         targetNode = targetNode.cloneNode(true)
         targetNode = existingNode.ownerDocument.importNode(targetNode, true)
+        fixInternetExplorerTextareaPlaceholderBug(targetNode)
         existingNode.parentNode.replaceChild(targetNode, existingNode)
         onNodeRemoved(existingNode)
         changedNodes.push(targetNode)
@@ -208,6 +209,14 @@ executeScriptTags = (selector) ->
     { parentNode, nextSibling } = script
     parentNode.removeChild script
     parentNode.insertBefore copy, nextSibling
+  return
+
+fixInternetExplorerTextareaPlaceholderBug = (node) ->
+  if node.tagName is 'TEXTAREA'
+    node.innerHTML = '' if node.hasAttribute('placeholder') and node.innerHTML isnt node.value and node.value is node.getAttribute('placeholder')
+  else
+    for textarea in node.querySelectorAll('textarea[placeholder]')
+      fixInternetExplorerTextareaPlaceholderBug(textarea)
   return
 
 # Firefox bug: Doesn't autofocus fields that are inserted via JavaScript
@@ -336,6 +345,7 @@ createDocument = (html) ->
     doc.querySelector('body').innerHTML = html
   doc.head = doc.querySelector('head')
   doc.body = doc.querySelector('body')
+  fixInternetExplorerTextareaPlaceholderBug(doc.body)
   doc
 
 # The ComponentUrl class converts a basic URL string into an object
